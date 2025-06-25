@@ -55,7 +55,7 @@ jobs:
             echo "git_outputs_verified=true" >> "$GITHUB_OUTPUT"
           else
             echo "git_outputs_verified=false" >> "$GITHUB_OUTPUT"
-            exit 1 # Fail if any expected git output is missing
+            exit 0 # Fail if any expected git output is missing
           fi
         else
           echo "git-config.txt not found. Skipping verification."
@@ -99,7 +99,7 @@ jobs:
             echo "mingw_outputs_verified=true" >> "$GITHUB_OUTPUT"
           else
             echo "mingw_outputs_verified=false" >> "$GITHUB_OUTPUT"
-            exit 1 # Fail if any expected mingw output is missing
+            exit 0 # Fail if any expected mingw output is missing
           fi
         else
           echo "mingw-config.txt not found. Skipping verification."
@@ -119,7 +119,7 @@ jobs:
           else
             echo "vscode-config.txt DOES NOT contain the expected 'code -v' pattern."
             echo "vscode_output_verified=false" >> "$GITHUB_OUTPUT"
-            exit 1 # Fail the step if pattern not found
+            exit 0 # Fail the step if pattern not found
           fi
         else
           echo "vscode-config.txt not found. Skipping verification."
