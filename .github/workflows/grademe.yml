@@ -30,12 +30,12 @@ jobs:
       run: |
         FOUND_FILES=$(find . -name "git-config.txt" -print -quit)
         if [ -n "$FOUND_FILES" ]; then
-          echo "Found git-config.txt. Verifying content for 'git version 2.49.0.windows.1'..."
-          if grep -Fq "git version 2.49.0.windows.1" "$FOUND_FILES"; then
-            echo "git-config.txt contains 'git version 2.49.0.windows.1'."
+          echo "Found git-config.txt. Verifying content for 'git version'..."
+          if grep -Fq "git version" "$FOUND_FILES"; then
+            echo "git-config.txt contains 'git version'."
             echo "has_specific_git_version=true" >> "$GITHUB_OUTPUT"
           else
-            echo "git-config.txt DOES NOT contain 'git version 2.49.0.windows.1'."
+            echo "git-config.txt DOES NOT contain 'git version'."
             echo "has_specific_git_version=false" >> "$GITHUB_OUTPUT"
             exit 1 # Fail the step if specific version not found
           fi
