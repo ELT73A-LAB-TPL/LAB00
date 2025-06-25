@@ -69,18 +69,19 @@ jobs:
       run: |
         FOUND_FILES=$(find . -name "vscode-config.txt" -print -quit)
         if [ -n "$FOUND_FILES" ]; then
-          echo "Found vscode-config.txt. Verifying content for any version number..."
-          if grep -Eq '\bv?\d+(\.\d+){1,3}(-(alpha|beta|rc)\.\d+)?\b' "$FOUND_FILES"; then
-            echo "vscode-config.txt contains a version number."
-            echo "has_any_version=true" >> "$GITHUB_OUTPUT"
+          echo "Found vscode-config.txt. Verifying content for VS Code version/commit pattern..."
+          # Regex to match "X.Y.Z 40-char-hash x64"
+          if grep -Eq '\b\d+\.\d+\.\d+\s[0-9a-fA-F]{40}\sx64\b' "$FOUND_FILES"; then
+            echo "vscode-config.txt contains the expected VS Code pattern."
+            echo "has_vscode_pattern=true" >> "$GITHUB_OUTPUT"
           else
-            echo "vscode-config.txt DOES NOT contain a version number."
-            echo "has_any_version=false" >> "$GITHUB_OUTPUT"
-            exit 1 # Fail the step if no version found
+            echo "vscode-config.txt DOES NOT contain the expected VS Code pattern."
+            echo "has_vscode_pattern=false" >> "$GITHUB_OUTPUT"
+            exit 1 # Fail the step if pattern not found
           fi
         else
           echo "vscode-config.txt not found. Skipping verification."
-          echo "has_any_version=skipped" >> "$GITHUB_OUTPUT"
+          echo "has_vscode_pattern=skipped" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Summarize results
