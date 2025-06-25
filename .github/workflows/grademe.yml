@@ -1,4 +1,4 @@
-name: Verify Config Files for Version Numbers
+name: Verify Config Files for Keywords and Version Numbers
 
 on:
   push:
@@ -18,51 +18,50 @@ on:
   workflow_dispatch: # Allows manual trigger
 
 jobs:
-  verify_config_versions:
+  verify_config_content:
     runs-on: ubuntu-latest
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Find and verify git-config.txt for specific version
+    - name: Find and verify git-config.txt for specific Git version
       id: git_config
       run: |
         FOUND_FILES=$(find . -name "git-config.txt" -print -quit)
         if [ -n "$FOUND_FILES" ]; then
-          echo "Found git-config.txt. Verifying content for 'git version'..."
-          # Use fixed string search for exact version
-          if grep -Fq "git version" "$FOUND_FILES"; then
-            echo "git-config.txt contains 'git version'."
-            echo "has_version=true" >> "$GITHUB_OUTPUT"
+          echo "Found git-config.txt. Verifying content for 'git version 2.49.0.windows.1'..."
+          if grep -Fq "git version 2.49.0.windows.1" "$FOUND_FILES"; then
+            echo "git-config.txt contains 'git version 2.49.0.windows.1'."
+            echo "has_specific_git_version=true" >> "$GITHUB_OUTPUT"
           else
-            echo "git-config.txt DOES NOT contain 'git version'."
-            echo "has_version=false" >> "$GITHUB_OUTPUT"
+            echo "git-config.txt DOES NOT contain 'git version 2.49.0.windows.1'."
+            echo "has_specific_git_version=false" >> "$GITHUB_OUTPUT"
             exit 1 # Fail the step if specific version not found
           fi
         else
           echo "git-config.txt not found. Skipping verification."
-          echo "has_version=skipped" >> "$GITHUB_OUTPUT"
+          echo "has_specific_git_version=skipped" >> "$GITHUB_OUTPUT"
         fi
 
-    - name: Find and verify mingw-config.txt for any version
+    - name: Find and verify mingw-config.txt for 'gcc' and 'gdb'
       id: mingw_config
       run: |
         FOUND_FILES=$(find . -name "mingw-config.txt" -print -quit)
         if [ -n "$FOUND_FILES" ]; then
-          echo "Found mingw-config.txt. Verifying content for any version number..."
-          # Use regex for general version number
-          if grep -Eq '\bv?\d+(\.\d+){1,3}(-(alpha|beta|rc)\.\d+)?\b' "$FOUND_FILES"; then
-            echo "mingw-config.txt contains a version number."
-            echo "has_version=true" >> "$GITHUB_OUTPUT"
+          echo "Found mingw-config.txt. Verifying content for 'gcc' and 'gdb'..."
+          # Check if the file contains both "gcc" AND "gdb"
+          if grep -q "gcc" "$FOUND_FILES" && grep -q "gdb" "$FOUND_FILES"; then
+            echo "mingw-config.txt contains both 'gcc' and 'gdb'."
+            echo "has_gcc_gdb=true" >> "$GITHUB_OUTPUT"
           else
-            echo "mingw-config.txt DOES NOT contain a version number."
-            echo "has_version=false" >> "$GITHUB_OUTPUT"
-            exit 1 # Fail the step if no version found
+            echo "mingw-config.txt DOES NOT contain both 'gcc' and 'gdb'."
+            echo "has_gcc_gdb=false" >> "$GITHUB_OUTPUT"
+            exit 1 # Fail the step if both keywords are not found
           fi
         else
           echo "mingw-config.txt not found. Skipping verification."
-          echo "has_version=skipped" >> "$GITHUB_OUTPUT"
+          echo "has_gcc_gdb=skipped" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Find and verify vscode-config.txt for any version
@@ -71,23 +70,22 @@ jobs:
         FOUND_FILES=$(find . -name "vscode-config.txt" -print -quit)
         if [ -n "$FOUND_FILES" ]; then
           echo "Found vscode-config.txt. Verifying content for any version number..."
-          # Use regex for general version number
           if grep -Eq '\bv?\d+(\.\d+){1,3}(-(alpha|beta|rc)\.\d+)?\b' "$FOUND_FILES"; then
             echo "vscode-config.txt contains a version number."
-            echo "has_version=true" >> "$GITHUB_OUTPUT"
+            echo "has_any_version=true" >> "$GITHUB_OUTPUT"
           else
             echo "vscode-config.txt DOES NOT contain a version number."
-            echo "has_version=false" >> "$GITHUB_OUTPUT"
+            echo "has_any_version=false" >> "$GITHUB_OUTPUT"
             exit 1 # Fail the step if no version found
           fi
         else
           echo "vscode-config.txt not found. Skipping verification."
-          echo "has_version=skipped" >> "$GITHUB_OUTPUT"
+          echo "has_any_version=skipped" >> "$GITHUB_OUTPUT"
         fi
 
     - name: Summarize results
       run: |
         echo "--- Verification Summary ---"
-        echo "git-config.txt (specific version): ${{ steps.git_config.outputs.has_version }}"
-        echo "mingw-config.txt (any version): ${{ steps.mingw_config.outputs.has_version }}"
-        echo "vscode-config.txt (any version): ${{ steps.vscode_config.outputs.has_version }}"
+        echo "git-config.txt (specific Git version '2.49.0.windows.1'): ${{ steps.git_config.outputs.has_specific_git_version }}"
+        echo "mingw-config.txt (contains 'gcc' and 'gdb'): ${{ steps.mingw_config.outputs.has_gcc_gdb }}"
+        echo "vscode-config.txt (contains any version): ${{ steps.vscode_config.outputs.has_any_version }}"
