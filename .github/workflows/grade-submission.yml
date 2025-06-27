@@ -10,46 +10,53 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+   
     - name: Read git-config.txt and Extract Info
       id: git_info
       run: |
         GIT_CONFIG_FILE="git-config.txt"
 
-        # Extract Git Version
-        GIT_VERSION=$(grep -m 1 "git version" "$GIT_CONFIG_FILE" | awk '{print $3}')
+        # Use -s (silent) and || true to prevent the step from failing if file is not found
+        # and ensure subsequent commands still run with potentially empty variables.
+        # This allows the grading step to handle the 'missing' state.
+        if [ -f "$GIT_CONFIG_FILE" ]; then
+          GIT_VERSION=$(grep -m 1 "git version" "$GIT_CONFIG_FILE" | awk '{print $3}')
+          GIT_USER_NAME=$(grep "user.name=" "$GIT_CONFIG_FILE" | awk -F'=' '{print $2}' | head -n 1)
+          GIT_USER_EMAIL=$(grep "user.email=" "$GIT_CONFIG_FILE" | awk -F'=' '{print $2}' | head -n 1)
+        else
+          echo "::warning file=$GIT_CONFIG_FILE::Git config file not found. Associated checks will fail."
+          GIT_VERSION=""
+          GIT_USER_NAME=""
+          GIT_USER_EMAIL=""
+        fi
+
         echo "Git Version: $GIT_VERSION"
         echo "git_version=$GIT_VERSION" >> "$GITHUB_OUTPUT"
-
-        # Extract User Name
-        GIT_USER_NAME=$(grep "user.name=" "$GIT_CONFIG_FILE" | awk -F'=' '{print $2}' | head -n 1)
         echo "Git User Name: $GIT_USER_NAME"
         echo "git_user_name=$GIT_USER_NAME" >> "$GITHUB_OUTPUT"
-
-        # Extract User Email
-        GIT_USER_EMAIL=$(grep "user.email=" "$GIT_CONFIG_FILE" | awk -F'=' '{print $2}' | head -n 1)
         echo "Git User Email: $GIT_USER_EMAIL"
         echo "git_user_email=$GIT_USER_EMAIL" >> "$GITHUB_OUTPUT"
-        
+
     - name: Read mingw-config.txt and Extract Info
       id: mingw_info
       run: |
         MINGW_CONFIG_FILE="mingw-config.txt"
 
-        # Extract GCC Version
-        # Look for a line starting with 'gcc (' and extract the version number (e.g., 14.1.0)
-        GCC_VERSION=$(grep -m 1 "^gcc (" "$MINGW_CONFIG_FILE" | awk '{print $NF}')
+        if [ -f "$MINGW_CONFIG_FILE" ]; then
+          GCC_VERSION=$(grep -m 1 "^gcc (" "$MINGW_CONFIG_FILE" | awk '{print $NF}')
+          CMAKE_VERSION=$(grep -m 1 "^cmake version" "$MINGW_CONFIG_FILE" | awk '{print $3}')
+          GDB_VERSION=$(grep -m 1 "^GNU gdb (GDB)" "$MINGW_CONFIG_FILE" | awk '{print $4}')
+        else
+          echo "::warning file=$MINGW_CONFIG_FILE::MinGW config file not found. Associated checks will fail."
+          GCC_VERSION=""
+          CMAKE_VERSION=""
+          GDB_VERSION=""
+        fi
+
         echo "GCC Version: $GCC_VERSION"
         echo "gcc_version=$GCC_VERSION" >> "$GITHUB_OUTPUT"
-
-        # Extract CMake Version
-        # Look for a line starting with 'cmake version' and extract the version number (e.g., 3.28.1)
-        CMAKE_VERSION=$(grep -m 1 "^cmake version" "$MINGW_CONFIG_FILE" | awk '{print $3}')
         echo "CMake Version: $CMAKE_VERSION"
         echo "cmake_version=$CMAKE_VERSION" >> "$GITHUB_OUTPUT"
-
-        # Extract GDB Version
-        # Look for a line starting with 'GNU gdb (GDB)' and extract the version number (e.g., 15.1)
-        GDB_VERSION=$(grep -m 1 "^GNU gdb (GDB)" "$MINGW_CONFIG_FILE" | awk '{print $4}')
         echo "GDB Version: $GDB_VERSION"
         echo "gdb_version=$GDB_VERSION" >> "$GITHUB_OUTPUT"
 
@@ -58,8 +65,13 @@ jobs:
       run: |
         VSCODE_CONFIG_FILE="vscode-config.txt"
 
-        # Extract VS Code Version from the first line
-        VSCODE_VERSION=$(head -n 1 "$VSCODE_CONFIG_FILE")
+        if [ -f "$VSCODE_CONFIG_FILE" ]; then
+          VSCODE_VERSION=$(head -n 1 "$VSCODE_CONFIG_FILE")
+        else
+          echo "::warning file=$VSCODE_CONFIG_FILE::VS Code config file not found. Associated checks will fail."
+          VSCODE_VERSION=""
+        fi
+
         echo "VS Code Version: $VSCODE_VERSION"
         echo "vscode_version=$VSCODE_VERSION" >> "$GITHUB_OUTPUT"
 
