@@ -140,53 +140,45 @@ jobs:
         fi
       id: grade_vscode_version
 
-    - name: Calculate Score and Prepare Report
-      id: scoring
+    - name: Final Grading Summary and Score Calculation
       run: |
         TOTAL_SCORE=0
-        REPORT_CONTENT="## Submission Grading Report\n\n"
-        REPORT_CONTENT+="**Last Graded:** $(date -R)\n\n" # Current date/time
 
-        REPORT_CONTENT+="### Configuration Checks:\n"
-
-        REPORT_CONTENT+="* **Git Version:** ${{ steps.grade_git_version.outputs.git_version_status }}\n"
+        echo "--- Grading Report ---"
+        echo "Git Version Status: ${{ steps.grade_git_version.outputs.git_version_status }}"
         if [[ "${{ steps.grade_git_version.outputs.git_version_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **Git User Name:** ${{ steps.grade_user_name.outputs.user_name_status }}\n"
+        echo "User Name Status: ${{ steps.grade_user_name.outputs.user_name_status }}"
         if [[ "${{ steps.grade_user_name.outputs.user_name_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **Git User Email:** ${{ steps.grade_user_email.outputs.user_email_status }}\n"
+        echo "User Email Status: ${{ steps.grade_user_email.outputs.user_email_status }}"
         if [[ "${{ steps.grade_user_email.outputs.user_email_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **GCC Version:** ${{ steps.grade_gcc_version.outputs.gcc_version_status }}\n"
+        echo "GCC Version Status: ${{ steps.grade_gcc_version.outputs.gcc_version_status }}"
         if [[ "${{ steps.grade_gcc_version.outputs.gcc_version_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **CMake Version:** ${{ steps.grade_cmake_version.outputs.cmake_version_status }}\n"
+        echo "CMake Version Status: ${{ steps.grade_cmake_version.outputs.cmake_version_status }}"
         if [[ "${{ steps.grade_cmake_version.outputs.cmake_version_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **GDB Version:** ${{ steps.grade_gdb_version.outputs.gdb_version_status }}\n"
+        echo "GDB Version Status: ${{ steps.grade_gdb_version.outputs.gdb_version_status }}"
         if [[ "${{ steps.grade_gdb_version.outputs.gdb_version_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 15))
         fi
-
-        REPORT_CONTENT+="* **VS Code Version:** ${{ steps.grade_vscode_version.outputs.vscode_version_status }}\n"
+        echo "VS Code Version Status: ${{ steps.grade_vscode_version.outputs.vscode_version_status }}"
         if [[ "${{ steps.grade_vscode_version.outputs.vscode_version_status }}" == "PASS" ]]; then
           TOTAL_SCORE=$((TOTAL_SCORE + 10))
         fi
 
-        REPORT_CONTENT+="\n### Overall Score:\n"
-        REPORT_CONTENT+="**Total Score:** $TOTAL_SCORE / 100\n\n"
+        echo "----------------------"
+        echo "Total Score: $TOTAL_SCORE / 100"
+        echo "----------------------"
 
+        # You can still include the optional job failure logic here if desired
         if [[ "${{ steps.grade_git_version.outputs.git_version_status }}" == "FAIL" || \
               "${{ steps.grade_user_name.outputs.user_name_status }}" == "FAIL" || \
               "${{ steps.grade_user_email.outputs.user_email_status }}" == "FAIL" || \
@@ -194,32 +186,9 @@ jobs:
               "${{ steps.grade_cmake_version.outputs.cmake_version_status }}" == "FAIL" || \
               "${{ steps.grade_gdb_version.outputs.gdb_version_status }}" == "FAIL" || \
               "${{ steps.grade_vscode_version.outputs.vscode_version_status }}" == "FAIL" ]]; then
-          REPORT_CONTENT+="*One or more required configuration items were not found. Please review the workflow logs for details.*\n"
-          echo "job_status=FAIL" >> "$GITHUB_OUTPUT" # Indicate job failure to be used in next step
-        else
-          REPORT_CONTENT+="*All required configuration items were found. Good job!*"
-          echo "job_status=PASS" >> "$GITHUB_OUTPUT" # Indicate job success
-        fi
-
-        # Output the report content for the next step to use
-        echo "report_content<<EOF" >> "$GITHUB_OUTPUT"
-        echo "$REPORT_CONTENT" >> "$GITHUB_OUTPUT"
-        echo "EOF" >> "$GITHUB_OUTPUT"
-
-    - name: Update README.md
-      uses: EndBug/add-and-commit@v9 # Use a pre-built action to commit changes
-      with:
-        message: 'Docs: Update grading report in README.md'
-        add: 'README.md'
-        # Optional: Set a custom committer if needed
-        committer_name: 'GitHub Actions Bot'
-        committer_email: 'github-actions[bot]@users.noreply.github.com'
-      if: success() || failure() # Run this step even if previous steps failed to update README with status
-
-    - name: Fail job if grading failed
-      run: |
-        if [[ "${{ steps.scoring.outputs.job_status }}" == "FAIL" ]]; then
-          echo "Job failed due to missing configuration items."
+          echo "One or more required configuration items were not found. Job failed."
           exit 1
+        else
+          echo "All required configuration items were found. Job passed."
         fi
-      if: always() # Always run to ensure job status reflects grading
+        
