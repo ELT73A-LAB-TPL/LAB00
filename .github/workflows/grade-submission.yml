@@ -1,7 +1,7 @@
 name: Grade Submission
 # This workflow parses git and development environment configuration files to extract and grade information.
 
-on: [push, workflow_dispatch]
+on: [workflow_dispatch]
 
 jobs:
   get-config-info:
